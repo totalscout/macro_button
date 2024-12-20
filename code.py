@@ -15,6 +15,14 @@ if(board.board_id == 'raspberry_pi_pico_w'):
     import wifi
     from webapp import *
 
+# Settings
+Autoinject=False
+
+# init run button. This is only needed when Autoinject = False
+if (Autoinject==False):
+    runButton_pin = DigitalInOut(GP15) # defaults to input
+    runButton_pin.pull = Pull.UP       # turn on internal pull-up resistor
+    runButton =  Debouncer(runButton_pin)
 
 # sleep at the start to allow the device to be recognized by the host computer
 time.sleep(.5)
@@ -46,21 +54,6 @@ elif(board.board_id == 'raspberry_pi_pico_w'):
     led = digitalio.DigitalInOut(board.LED)
     led.switch_to_output()
 
-
-progStatus = False
-progStatus = getProgrammingStatus()
-print("progStatus", progStatus)
-if(progStatus == False):
-    print("Finding payload")
-    # not in setup mode, inject the payload
-    payload = selectPayload()
-    print("Running ", payload)
-    runScript(payload)
-
-    print("Done")
-else:
-    print("Update your payload")
-
 led_state = False
 
 async def main_loop():
@@ -79,3 +72,33 @@ async def main_loop():
         await asyncio.gather(pico_led_task, button_task)
 
 asyncio.run(main_loop())
+
+progStatus = False
+progStatus = getProgrammingStatus() # Get programmingstatus
+print("progStatus", progStatus)
+
+if(progStatus == False and Autoinject == True):            # Checks if brogramming pins are shorted
+    print("Finding payload")
+    # not in setup mode, inject the payload
+    payload = selectPayload()
+    print("Running ", payload)
+    runScript(payload)              # Run the payload
+    print("Done")
+elif:
+    print("Going into button mode")
+    while True:
+        # Check if button is pressed
+        pressed = digitalio.DigitalInOut(GP0)
+        pressed.switch_to_input(pull=digitalio.Pull.UP)
+        pressed = not runButton_pin.value
+        if pressed:
+            print("Run button was pressed, injecting payload")
+            payload = selectPayload()
+            print("Running ", payload)
+            runScript(payload) 
+            print("Done")
+        time.sleep(0.2)
+else:
+    print("It went to shit")
+        
+
